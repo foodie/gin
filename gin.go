@@ -14,6 +14,7 @@ import (
 	"github.com/gin-gonic/gin/render"
 )
 
+//版本和固定的内存块
 const (
 	// Version is Framework's version.
 	Version                = "v1.2"
