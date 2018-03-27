@@ -21,15 +21,21 @@ const (
 	defaultMultipartMemory = 32 << 20 // 32 MB
 )
 
+//默认的错误信息
 var (
-	default404Body   = []byte("404 page not found")
-	default405Body   = []byte("405 method not allowed")
+	default404Body = []byte("404 page not found")
+	default405Body = []byte("405 method not allowed")
+	//默认引擎
 	defaultAppEngine bool
 )
 
+//定义函数类型
 type HandlerFunc func(*Context)
+
+//定义函数链
 type HandlersChain []HandlerFunc
 
+//获取最后一个函数
 // Last returns the last handler in the chain. ie. the last handler is the main own.
 func (c HandlersChain) Last() HandlerFunc {
 	if length := len(c); length > 0 {
@@ -38,12 +44,14 @@ func (c HandlersChain) Last() HandlerFunc {
 	return nil
 }
 
+//路由基本信息
 type RouteInfo struct {
 	Method  string
 	Path    string
 	Handler string
 }
 
+//路由数组
 type RoutesInfo []RouteInfo
 
 // Engine is the framework's instance, it contains the muxer, middleware and configuration settings.

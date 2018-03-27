@@ -6,6 +6,7 @@ package render
 
 import "net/http"
 
+//定义接口
 type Render interface {
 	Render(http.ResponseWriter) error
 	WriteContentType(w http.ResponseWriter)

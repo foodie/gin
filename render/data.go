@@ -7,8 +7,8 @@ package render
 import "net/http"
 
 type Data struct {
-	ContentType string
-	Data        []byte
+	ContentType string //内容类型
+	Data        []byte //数据
 }
 
 // Render (Data) writes data with custom ContentType.
@@ -18,6 +18,7 @@ func (r Data) Render(w http.ResponseWriter) (err error) {
 	return
 }
 
+//
 func (r Data) WriteContentType(w http.ResponseWriter) {
 	writeContentType(w, []string{r.ContentType})
 }
