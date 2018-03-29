@@ -6,12 +6,13 @@ package render
 
 import "net/http"
 
-//定义接口
+//定义接口，处理http.ResponseWriter
 type Render interface {
 	Render(http.ResponseWriter) error
 	WriteContentType(w http.ResponseWriter)
 }
 
+//定义各种空对象
 var (
 	_ Render     = JSON{}
 	_ Render     = IndentedJSON{}
@@ -27,6 +28,7 @@ var (
 	_ Render     = MsgPack{}
 )
 
+//如果Content-Type 不存在，写Content-Type
 func writeContentType(w http.ResponseWriter, value []string) {
 	header := w.Header()
 	if val := header["Content-Type"]; len(val) == 0 {
