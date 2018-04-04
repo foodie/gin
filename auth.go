@@ -13,6 +13,7 @@ import (
 // AuthUserKey is the cookie name for user credential in basic auth.
 const AuthUserKey = "user"
 
+//获取map
 // Accounts defines a key/value for user/pass list of authorized logins.
 type Accounts map[string]string
 
@@ -21,8 +22,10 @@ type authPair struct {
 	user  string
 }
 
+//pairs
 type authPairs []authPair
 
+//查找
 func (a authPairs) searchCredential(authValue string) (string, bool) {
 	if authValue == "" {
 		return "", false
@@ -39,11 +42,17 @@ func (a authPairs) searchCredential(authValue string) (string, bool) {
 // the key is the user name and the value is the password, as well as the name of the Realm.
 // If the realm is empty, "Authorization Required" will be used by default.
 // (see http://tools.ietf.org/html/rfc2617#section-1.2)
+//
 func BasicAuthForRealm(accounts Accounts, realm string) HandlerFunc {
+	//处理Auth
 	if realm == "" {
 		realm = "Authorization Required"
 	}
 	realm = "Basic realm=" + strconv.Quote(realm)
+
+	//处理account
+
+	//从
 	pairs := processAccounts(accounts)
 	return func(c *Context) {
 		// Search user in the slice of allowed credentials
@@ -61,12 +70,14 @@ func BasicAuthForRealm(accounts Accounts, realm string) HandlerFunc {
 	}
 }
 
+//基本的认证
 // BasicAuth returns a Basic HTTP Authorization middleware. It takes as argument a map[string]string where
 // the key is the user name and the value is the password.
 func BasicAuth(accounts Accounts) HandlerFunc {
 	return BasicAuthForRealm(accounts, "")
 }
 
+//处理accounts 把它转成pairs
 func processAccounts(accounts Accounts) authPairs {
 	assert1(len(accounts) > 0, "Empty list of authorized credentials")
 	pairs := make(authPairs, 0, len(accounts))
@@ -81,11 +92,13 @@ func processAccounts(accounts Accounts) authPairs {
 	return pairs
 }
 
+//对value进行加密
 func authorizationHeader(user, password string) string {
 	base := user + ":" + password
 	return "Basic " + base64.StdEncoding.EncodeToString([]byte(base))
 }
 
+//比较str
 func secureCompare(given, actual string) bool {
 	if subtle.ConstantTimeEq(int32(len(given)), int32(len(actual))) == 1 {
 		return subtle.ConstantTimeCompare([]byte(given), []byte(actual)) == 1
