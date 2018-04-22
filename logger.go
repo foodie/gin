@@ -13,6 +13,7 @@ import (
 	"github.com/mattn/go-isatty"
 )
 
+//定义颜色的字符串
 var (
 	green        = string([]byte{27, 91, 57, 55, 59, 52, 50, 109})
 	white        = string([]byte{27, 91, 57, 48, 59, 52, 55, 109})
@@ -25,20 +26,25 @@ var (
 	disableColor = false
 )
 
+//禁用颜色
 // DisableConsoleColor disables color output in the console.
 func DisableConsoleColor() {
 	disableColor = true
 }
 
+//报错日志
 // ErrorLogger returns a handlerfunc for any error type.
 func ErrorLogger() HandlerFunc {
 	return ErrorLoggerT(ErrorTypeAny)
 }
 
+//处理任意的错误类型
 // ErrorLoggerT returns a handlerfunc for a given error type.
 func ErrorLoggerT(typ ErrorType) HandlerFunc {
+	//
 	return func(c *Context) {
-		c.Next()
+		c.Next() //处理下一个
+		//获取error，线上error
 		errors := c.Errors.ByType(typ)
 		if len(errors) > 0 {
 			c.JSON(-1, errors)
@@ -129,6 +135,7 @@ func colorForStatus(code int) string {
 	}
 }
 
+//根据字符串获取对应的颜色
 func colorForMethod(method string) string {
 	switch method {
 	case "GET":

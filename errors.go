@@ -12,50 +12,67 @@ import (
 	"github.com/gin-gonic/gin/json"
 )
 
+//定义错误类型
 type ErrorType uint64
 
+//错误类型的值
 const (
-	ErrorTypeBind    ErrorType = 1 << 63 // used when c.Bind() fails
-	ErrorTypeRender  ErrorType = 1 << 62 // used when c.Render() fails
+	//bing错误
+	ErrorTypeBind ErrorType = 1 << 63 // used when c.Bind() fails
+	//private错误
+	ErrorTypeRender ErrorType = 1 << 62 // used when c.Render() fails
+	//private 错误
 	ErrorTypePrivate ErrorType = 1 << 0
-	ErrorTypePublic  ErrorType = 1 << 1
-
+	//public 错误
+	ErrorTypePublic ErrorType = 1 << 1
+	//任意错误
 	ErrorTypeAny ErrorType = 1<<64 - 1
-	ErrorTypeNu            = 2
+	//nu错误
+	ErrorTypeNu = 2
 )
 
+//错误类型
 type Error struct {
-	Err  error
-	Type ErrorType
-	Meta interface{}
+	Err  error       //定义error
+	Type ErrorType   //错误类型
+	Meta interface{} //处理元数据
 }
 
+//定义Error数组
 type errorMsgs []*Error
 
+//为啥要这么做呢？
 var _ error = &Error{}
 
+//设置类型
 func (msg *Error) SetType(flags ErrorType) *Error {
 	msg.Type = flags
 	return msg
 }
 
+//设置元数据
 func (msg *Error) SetMeta(data interface{}) *Error {
 	msg.Meta = data
 	return msg
 }
 
+//返回json字符串
 func (msg *Error) JSON() interface{} {
-	json := H{}
+	json := H{} //定义基本的串
+	//获取meta的结构
 	if msg.Meta != nil {
 		value := reflect.ValueOf(msg.Meta)
+
+		//获取基本类型
 		switch value.Kind() {
 		case reflect.Struct:
-			return msg.Meta
+			return msg.Meta //结构的话直接返回
 		case reflect.Map:
+			//如果是map直接放入
 			for _, key := range value.MapKeys() {
 				json[key.String()] = value.MapIndex(key).Interface()
 			}
-		default:
+		default: //其他类型
 			json["meta"] = msg.Meta
 		}
 	}
@@ -65,29 +82,35 @@ func (msg *Error) JSON() interface{} {
 	return json
 }
 
+//对msg进行json编码
 // MarshalJSON implements the json.Marshaller interface.
 func (msg *Error) MarshalJSON() ([]byte, error) {
 	return json.Marshal(msg.JSON())
 }
 
+//返回error
 // Error implements the error interface
 func (msg Error) Error() string {
 	return msg.Err.Error()
 }
 
+//type&flag 是否大于0
 func (msg *Error) IsType(flags ErrorType) bool {
 	return (msg.Type & flags) > 0
 }
 
+//
 // ByType returns a readonly copy filtered the byte.
 // ie ByType(gin.ErrorTypePublic) returns a slice of errors with type=ErrorTypePublic.
 func (a errorMsgs) ByType(typ ErrorType) errorMsgs {
 	if len(a) == 0 {
 		return nil
 	}
+	//nil和任意类型直接返回
 	if typ == ErrorTypeAny {
 		return a
 	}
+	//返回符合类型的result
 	var result errorMsgs
 	for _, msg := range a {
 		if msg.IsType(typ) {
@@ -97,6 +120,7 @@ func (a errorMsgs) ByType(typ ErrorType) errorMsgs {
 	return result
 }
 
+//返回最后一个error
 // Last returns the last error in the slice. It returns nil if the array is empty.
 // Shortcut for errors[len(errors)-1].
 func (a errorMsgs) Last() *Error {
@@ -112,6 +136,7 @@ func (a errorMsgs) Last() *Error {
 // 		c.Error(errors.New("second"))
 // 		c.Error(errors.New("third"))
 // 		c.Errors.Errors() // == []string{"first", "second", "third"}
+//返回一个string slice
 func (a errorMsgs) Errors() []string {
 	if len(a) == 0 {
 		return nil
@@ -123,6 +148,7 @@ func (a errorMsgs) Errors() []string {
 	return errorStrings
 }
 
+//对errorMsgs json串
 func (a errorMsgs) JSON() interface{} {
 	switch len(a) {
 	case 0:
@@ -138,10 +164,12 @@ func (a errorMsgs) JSON() interface{} {
 	}
 }
 
+//json压缩
 func (a errorMsgs) MarshalJSON() ([]byte, error) {
 	return json.Marshal(a.JSON())
 }
 
+//对 errormsgs进行json化
 func (a errorMsgs) String() string {
 	if len(a) == 0 {
 		return ""

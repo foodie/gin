@@ -360,7 +360,7 @@ func (engine *Engine) RunUnix(file string) (err error) {
 	return
 }
 
-//实现ServeHTTP接口
+//实现Handler接口
 // ServeHTTP conforms to the http.Handler interface.
 func (engine *Engine) ServeHTTP(w http.ResponseWriter, req *http.Request) {
 	//获取context
@@ -397,7 +397,7 @@ func (engine *Engine) handleHTTPRequest(c *Context) {
 		unescape = engine.UnescapePathValues
 	}
 
-	//获取素有的树
+	//获取树
 	// Find root of the tree for the given HTTP method
 	t := engine.trees
 	for i, tl := 0, len(t); i < tl; i++ {
