@@ -8,6 +8,7 @@ package json
 
 import "encoding/json"
 
+//定义内部变量
 var (
 	Marshal       = json.Marshal
 	MarshalIndent = json.MarshalIndent

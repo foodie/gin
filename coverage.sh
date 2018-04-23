@@ -4,6 +4,7 @@ set -e
 
 echo "mode: count" > coverage.out
 
+#测试脚本
 for d in $(go list ./... | grep -E 'gin$|binding$|render$'); do
     go test -v -covermode=count -coverprofile=profile.out $d
     if [ -f profile.out ]; then

@@ -52,6 +52,7 @@ func ErrorLoggerT(typ ErrorType) HandlerFunc {
 	}
 }
 
+//写日志，中间件
 // Logger instances a Logger middleware that will write the logs to gin.DefaultWriter.
 // By default gin.DefaultWriter = os.Stdout.
 func Logger() HandlerFunc {
@@ -61,16 +62,20 @@ func Logger() HandlerFunc {
 // LoggerWithWriter instance a Logger middleware with the specified writter buffer.
 // Example: os.Stdout, a file opened in write mode, a socket...
 func LoggerWithWriter(out io.Writer, notlogged ...string) HandlerFunc {
+	//是否是iterm
 	isTerm := true
 
-	if w, ok := out.(*os.File); !ok ||
-		(os.Getenv("TERM") == "dumb" || (!isatty.IsTerminal(w.Fd()) && !isatty.IsCygwinTerminal(w.Fd()))) ||
-		disableColor {
+	if w, ok := out.(*os.File); !ok || //不是文件
+		(os.Getenv("TERM") == "dumb" || //环境是dumb
+			(!isatty.IsTerminal(w.Fd()) && //不是终端
+				!isatty.IsCygwinTerminal(w.Fd()))) || //不是终端
+		disableColor { //不显示颜色
 		isTerm = false
 	}
-
+	//需要跳过
 	var skip map[string]struct{}
 
+	//记录不写日志的路径
 	if length := len(notlogged); length > 0 {
 		skip = make(map[string]struct{}, length)
 
@@ -81,34 +86,46 @@ func LoggerWithWriter(out io.Writer, notlogged ...string) HandlerFunc {
 
 	return func(c *Context) {
 		// Start timer
+		//开始时间，路径，查询串
 		start := time.Now()
 		path := c.Request.URL.Path
 		raw := c.Request.URL.RawQuery
 
+		//处理情况请求
 		// Process request
 		c.Next()
 
+		//不是需要跳过的
 		// Log only when path is not being skipped
 		if _, ok := skip[path]; !ok {
 			// Stop timer
+			//结束时间
 			end := time.Now()
+			//访问时间
 			latency := end.Sub(start)
 
+			//客户端ip
 			clientIP := c.ClientIP()
+			//方法
 			method := c.Request.Method
+			//状态码
 			statusCode := c.Writer.Status()
+			//设置各种颜色
 			var statusColor, methodColor, resetColor string
 			if isTerm {
 				statusColor = colorForStatus(statusCode)
 				methodColor = colorForMethod(method)
 				resetColor = reset
 			}
+			//获取注释内容
 			comment := c.Errors.ByType(ErrorTypePrivate).String()
 
+			//得到path
 			if raw != "" {
 				path = path + "?" + raw
 			}
 
+			//输出日志
 			fmt.Fprintf(out, "[GIN] %v |%s %3d %s| %13v | %15s |%s %-7s %s %s\n%s",
 				end.Format("2006/01/02 - 15:04:05"),
 				statusColor, statusCode, resetColor,
@@ -122,6 +139,7 @@ func LoggerWithWriter(out io.Writer, notlogged ...string) HandlerFunc {
 	}
 }
 
+//根据状态码获取对应的颜色
 func colorForStatus(code int) string {
 	switch {
 	case code >= 200 && code < 300:

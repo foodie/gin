@@ -8,6 +8,7 @@ package json
 
 import "github.com/json-iterator/go"
 
+//对json进行包装
 var (
 	json          = jsoniter.ConfigCompatibleWithStandardLibrary
 	Marshal       = json.Marshal
