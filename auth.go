@@ -52,7 +52,7 @@ func BasicAuthForRealm(accounts Accounts, realm string) HandlerFunc {
 
 	//处理account
 
-	//从
+	//从map转换成pairs
 	pairs := processAccounts(accounts)
 	return func(c *Context) {
 		// Search user in the slice of allowed credentials
@@ -98,7 +98,7 @@ func authorizationHeader(user, password string) string {
 	return "Basic " + base64.StdEncoding.EncodeToString([]byte(base))
 }
 
-//比较str
+//比较str，比较长度和内容
 func secureCompare(given, actual string) bool {
 	if subtle.ConstantTimeEq(int32(len(given)), int32(len(actual))) == 1 {
 		return subtle.ConstantTimeCompare([]byte(given), []byte(actual)) == 1

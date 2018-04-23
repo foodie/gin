@@ -11,12 +11,14 @@ import (
 	"testing"
 )
 
+//test  get ping
 func BenchmarkOneRoute(B *testing.B) {
 	router := New()
 	router.GET("/ping", func(c *Context) {})
 	runRequest(B, router, "GET", "/ping")
 }
 
+//test recovery middleware
 func BenchmarkRecoveryMiddleware(B *testing.B) {
 	router := New()
 	router.Use(Recovery())
@@ -24,6 +26,7 @@ func BenchmarkRecoveryMiddleware(B *testing.B) {
 	runRequest(B, router, "GET", "/")
 }
 
+//test logg middleware
 func BenchmarkLoggerMiddleware(B *testing.B) {
 	router := New()
 	router.Use(LoggerWithWriter(newMockWriter()))

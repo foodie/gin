@@ -31,6 +31,7 @@ const (
 // To support coloring in Windows use:
 // 		import "github.com/mattn/go-colorable"
 // 		gin.DefaultWriter = colorable.NewColorableStdout()
+//默认的输出和错误输出位置
 var DefaultWriter io.Writer = os.Stdout
 var DefaultErrorWriter io.Writer = os.Stderr
 
@@ -59,14 +60,17 @@ func SetMode(value string) {
 	modeName = value
 }
 
+// 过滤
 func DisableBindValidation() {
 	binding.Validator = nil
 }
 
+//
 func EnableJsonDecoderUseNumber() {
 	binding.EnableDecoderUseNumber = true
 }
 
+//返回mode
 func Mode() string {
 	return modeName
 }

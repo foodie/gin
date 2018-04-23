@@ -13,6 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
+//基本认知测试
 func TestBasicAuth(t *testing.T) {
 	pairs := processAccounts(Accounts{
 		"admin": "password",
@@ -35,6 +36,8 @@ func TestBasicAuth(t *testing.T) {
 	})
 }
 
+//失败的情况
+//测试panics
 func TestBasicAuthFails(t *testing.T) {
 	assert.Panics(t, func() { processAccounts(nil) })
 	assert.Panics(t, func() {
@@ -77,10 +80,12 @@ func TestBasicAuthSearchCredential(t *testing.T) {
 	assert.False(t, found)
 }
 
+//基础认知
 func TestBasicAuthAuthorizationHeader(t *testing.T) {
 	assert.Equal(t, "Basic YWRtaW46cGFzc3dvcmQ=", authorizationHeader("admin", "password"))
 }
 
+//基础的比较
 func TestBasicAuthSecureCompare(t *testing.T) {
 	assert.True(t, secureCompare("1234567890", "1234567890"))
 	assert.False(t, secureCompare("123456789", "1234567890"))
@@ -88,6 +93,7 @@ func TestBasicAuthSecureCompare(t *testing.T) {
 	assert.False(t, secureCompare("1234567891", "1234567890"))
 }
 
+//测试认知成功的情况
 func TestBasicAuthSucceed(t *testing.T) {
 	accounts := Accounts{"admin": "password"}
 	router := New()
@@ -105,6 +111,7 @@ func TestBasicAuthSucceed(t *testing.T) {
 	assert.Equal(t, "admin", w.Body.String())
 }
 
+//测试认证失败的情况
 func TestBasicAuth401(t *testing.T) {
 	called := false
 	accounts := Accounts{"foo": "bar"}
@@ -125,6 +132,7 @@ func TestBasicAuth401(t *testing.T) {
 	assert.Equal(t, "Basic realm=\"Authorization Required\"", w.HeaderMap.Get("WWW-Authenticate"))
 }
 
+//测试韩还有realm的情况
 func TestBasicAuth401WithCustomRealm(t *testing.T) {
 	called := false
 	accounts := Accounts{"foo": "bar"}
