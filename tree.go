@@ -10,6 +10,7 @@ import (
 	"unicode"
 )
 
+//变量类型
 // Param is a single URL parameter, consisting of a key and a value.
 type Param struct {
 	Key   string
@@ -19,10 +20,12 @@ type Param struct {
 // Params is a Param-slice, as returned by the router.
 // The slice is ordered, the first URL parameter is also the first slice value.
 // It is therefore safe to read values by the index.
+//变量列表
 type Params []Param
 
 // Get returns the value of the first Param which key matches the given name.
 // If no matching Param is found, an empty string is returned.
+//获取变量值
 func (ps Params) Get(name string) (string, bool) {
 	for _, entry := range ps {
 		if entry.Key == name {
@@ -32,6 +35,7 @@ func (ps Params) Get(name string) (string, bool) {
 	return "", false
 }
 
+//得到一个变量
 // ByName returns the value of the first Param which key matches the given name.
 // If no matching Param is found, an empty string is returned.
 func (ps Params) ByName(name string) (va string) {

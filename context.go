@@ -23,6 +23,7 @@ import (
 )
 
 // Content-Type MIME of the most common data formats.
+//定义基本类型
 const (
 	MIMEJSON              = binding.MIMEJSON
 	MIMEHTML              = binding.MIMEHTML
@@ -33,27 +34,31 @@ const (
 	MIMEMultipartPOSTForm = binding.MIMEMultipartPOSTForm
 )
 
+//最大的index
 const abortIndex int8 = math.MaxInt8 / 2
 
 // Context is the most important part of gin. It allows us to pass variables between middleware,
 // manage the flow, validate the JSON of a request and render a JSON response for example.
 type Context struct {
-	writermem responseWriter
-	Request   *http.Request
-	Writer    ResponseWriter
+	writermem responseWriter //内部的写
+	Request   *http.Request  //请求request
+	Writer    ResponseWriter //实现写的新接口
 
-	Params   Params
-	handlers HandlersChain
-	index    int8
+	Params   Params        //参数
+	handlers HandlersChain //调用函数链
+	index    int8          //索引
 
-	engine *Engine
+	engine *Engine //引擎的指针
 
+	//key列表
 	// Keys is a key/value pair exclusively for the context of each request.
 	Keys map[string]interface{}
 
+	//错误信息组
 	// Errors is a list of errors attached to all the handlers/middlewares who used this context.
 	Errors errorMsgs
 
+	//接收到的字符串数组
 	// Accepted defines a list of manually accepted formats for content negotiation.
 	Accepted []string
 }
@@ -62,8 +67,10 @@ type Context struct {
 /********** CONTEXT CREATION ********/
 /************************************/
 
+//重置
 func (c *Context) reset() {
-	c.Writer = &c.writermem
+	c.Writer = &c.writermem //writermeme不变
+	//清空参数
 	c.Params = c.Params[0:0]
 	c.handlers = nil
 	c.index = -1
@@ -72,23 +79,31 @@ func (c *Context) reset() {
 	c.Accepted = nil
 }
 
+//拷贝
 // Copy returns a copy of the current context that can be safely used outside the request's scope.
 // This has to be used when the context has to be passed to a goroutine.
 func (c *Context) Copy() *Context {
+	//复制一个新的变量
 	var cp = *c
+	//响应为空
 	cp.writermem.ResponseWriter = nil
+	//writermem复制到writer
 	cp.Writer = &cp.writermem
+	//设置索引
 	cp.index = abortIndex
+	//处理器
 	cp.handlers = nil
 	return &cp
 }
 
 // HandlerName returns the main handler's name. For example if the handler is "handleGetUsers()",
 // this function will return "main.handleGetUsers".
+//获取最后一个处理器的名字
 func (c *Context) HandlerName() string {
 	return nameOfFunction(c.handlers.Last())
 }
 
+//返回最后一个处理器的名字
 // Handler returns the main handler.
 func (c *Context) Handler() HandlerFunc {
 	return c.handlers.Last()
@@ -101,6 +116,7 @@ func (c *Context) Handler() HandlerFunc {
 // Next should be used only inside middleware.
 // It executes the pending handlers in the chain inside the calling handler.
 // See example in GitHub.
+//调用下一个处理器handlers
 func (c *Context) Next() {
 	c.index++
 	for s := int8(len(c.handlers)); c.index < s; c.index++ {
@@ -108,6 +124,7 @@ func (c *Context) Next() {
 	}
 }
 
+//是否是abort状态
 // IsAborted returns true if the current context was aborted.
 func (c *Context) IsAborted() bool {
 	return c.index >= abortIndex
@@ -117,14 +134,17 @@ func (c *Context) IsAborted() bool {
 // Let's say you have an authorization middleware that validates that the current request is authorized.
 // If the authorization fails (ex: the password does not match), call Abort to ensure the remaining handlers
 // for this request are not called.
+//设置abort
 func (c *Context) Abort() {
 	c.index = abortIndex
 }
 
 // AbortWithStatus calls `Abort()` and writes the headers with the specified status code.
 // For example, a failed attempt to authenticate a request could use: context.AbortWithStatus(401).
+//设置status状态，
 func (c *Context) AbortWithStatus(code int) {
 	c.Status(code)
+	//写入头部信息
 	c.Writer.WriteHeaderNow()
 	c.Abort()
 }
@@ -137,6 +157,7 @@ func (c *Context) AbortWithStatusJSON(code int, jsonObj interface{}) {
 	c.JSON(code, jsonObj)
 }
 
+//设置错误码，返回error
 // AbortWithError calls `AbortWithStatus()` and `Error()` internally.
 // This method stops the chain, writes the status code and pushes the specified error to `c.Errors`.
 // See Context.Error() for more details.
@@ -154,6 +175,7 @@ func (c *Context) AbortWithError(code int, err error) *Error {
 // A middleware can be used to collect all the errors and push them to a database together,
 // print a log, or append it in the HTTP response.
 // Error will panic if err is nil.
+//把error放置到Errors里面，返回当前的error
 func (c *Context) Error(err error) *Error {
 	if err == nil {
 		panic("err is nil")
@@ -172,12 +194,13 @@ func (c *Context) Error(err error) *Error {
 	return parsedError
 }
 
-/************************************/
+/*****************************f*******/
 /******** METADATA MANAGEMENT********/
 /************************************/
 
 // Set is used to store a new key/value pair exclusively for this context.
 // It also lazy initializes  c.Keys if it was not used previously.
+//设置key-value的值
 func (c *Context) Set(key string, value interface{}) {
 	if c.Keys == nil {
 		c.Keys = make(map[string]interface{})
@@ -185,6 +208,7 @@ func (c *Context) Set(key string, value interface{}) {
 	c.Keys[key] = value
 }
 
+//获取值
 // Get returns the value for the given key, ie: (value, true).
 // If the value does not exists it returns (nil, false)
 func (c *Context) Get(key string) (value interface{}, exists bool) {
@@ -192,6 +216,7 @@ func (c *Context) Get(key string) (value interface{}, exists bool) {
 	return
 }
 
+//必须有的值
 // MustGet returns the value for the given key if it exists, otherwise it panics.
 func (c *Context) MustGet(key string) interface{} {
 	if value, exists := c.Get(key); exists {
@@ -200,6 +225,7 @@ func (c *Context) MustGet(key string) interface{} {
 	panic("Key \"" + key + "\" does not exist")
 }
 
+//返回一个string类型的值
 // GetString returns the value associated with the key as a string.
 func (c *Context) GetString(key string) (s string) {
 	if val, ok := c.Get(key); ok && val != nil {
@@ -208,6 +234,7 @@ func (c *Context) GetString(key string) (s string) {
 	return
 }
 
+//获取bool
 // GetBool returns the value associated with the key as a boolean.
 func (c *Context) GetBool(key string) (b bool) {
 	if val, ok := c.Get(key); ok && val != nil {
@@ -216,6 +243,7 @@ func (c *Context) GetBool(key string) (b bool) {
 	return
 }
 
+//获取int
 // GetInt returns the value associated with the key as an integer.
 func (c *Context) GetInt(key string) (i int) {
 	if val, ok := c.Get(key); ok && val != nil {
@@ -224,6 +252,7 @@ func (c *Context) GetInt(key string) (i int) {
 	return
 }
 
+//获取int64
 // GetInt64 returns the value associated with the key as an integer.
 func (c *Context) GetInt64(key string) (i64 int64) {
 	if val, ok := c.Get(key); ok && val != nil {
@@ -232,6 +261,7 @@ func (c *Context) GetInt64(key string) (i64 int64) {
 	return
 }
 
+//获取float
 // GetFloat64 returns the value associated with the key as a float64.
 func (c *Context) GetFloat64(key string) (f64 float64) {
 	if val, ok := c.Get(key); ok && val != nil {
@@ -240,6 +270,7 @@ func (c *Context) GetFloat64(key string) (f64 float64) {
 	return
 }
 
+//获取时间类型
 // GetTime returns the value associated with the key as time.
 func (c *Context) GetTime(key string) (t time.Time) {
 	if val, ok := c.Get(key); ok && val != nil {
@@ -248,6 +279,7 @@ func (c *Context) GetTime(key string) (t time.Time) {
 	return
 }
 
+//获取Duration
 // GetDuration returns the value associated with the key as a duration.
 func (c *Context) GetDuration(key string) (d time.Duration) {
 	if val, ok := c.Get(key); ok && val != nil {
@@ -256,6 +288,7 @@ func (c *Context) GetDuration(key string) (d time.Duration) {
 	return
 }
 
+//获取slice
 // GetStringSlice returns the value associated with the key as a slice of strings.
 func (c *Context) GetStringSlice(key string) (ss []string) {
 	if val, ok := c.Get(key); ok && val != nil {
@@ -264,6 +297,7 @@ func (c *Context) GetStringSlice(key string) (ss []string) {
 	return
 }
 
+//获取map
 // GetStringMap returns the value associated with the key as a map of interfaces.
 func (c *Context) GetStringMap(key string) (sm map[string]interface{}) {
 	if val, ok := c.Get(key); ok && val != nil {
@@ -272,6 +306,7 @@ func (c *Context) GetStringMap(key string) (sm map[string]interface{}) {
 	return
 }
 
+//获取string string map
 // GetStringMapString returns the value associated with the key as a map of strings.
 func (c *Context) GetStringMapString(key string) (sms map[string]string) {
 	if val, ok := c.Get(key); ok && val != nil {
@@ -280,6 +315,7 @@ func (c *Context) GetStringMapString(key string) (sms map[string]string) {
 	return
 }
 
+//获取 string []string
 // GetStringMapStringSlice returns the value associated with the key as a map to a slice of strings.
 func (c *Context) GetStringMapStringSlice(key string) (smss map[string][]string) {
 	if val, ok := c.Get(key); ok && val != nil {
@@ -298,6 +334,7 @@ func (c *Context) GetStringMapStringSlice(key string) (smss map[string][]string)
 //         // a GET request to /user/john
 //         id := c.Param("id") // id == "john"
 //     })
+//查找值
 func (c *Context) Param(key string) string {
 	return c.Params.ByName(key)
 }
@@ -310,6 +347,8 @@ func (c *Context) Param(key string) string {
 // 	   c.Query("name") == "Manu"
 // 	   c.Query("value") == ""
 // 	   c.Query("wtf") == ""
+//
+//获取一个值
 func (c *Context) Query(key string) string {
 	value, _ := c.GetQuery(key)
 	return value
@@ -322,6 +361,7 @@ func (c *Context) Query(key string) string {
 //     c.DefaultQuery("name", "unknown") == "Manu"
 //     c.DefaultQuery("id", "none") == "none"
 //     c.DefaultQuery("lastname", "none") == ""
+//获取默认的值
 func (c *Context) DefaultQuery(key, defaultValue string) string {
 	if value, ok := c.GetQuery(key); ok {
 		return value
@@ -337,6 +377,7 @@ func (c *Context) DefaultQuery(key, defaultValue string) string {
 //     ("Manu", true) == c.GetQuery("name")
 //     ("", false) == c.GetQuery("id")
 //     ("", true) == c.GetQuery("lastname")
+//获取一个值
 func (c *Context) GetQuery(key string) (string, bool) {
 	if values, ok := c.GetQueryArray(key); ok {
 		return values[0], ok
@@ -344,6 +385,7 @@ func (c *Context) GetQuery(key string) (string, bool) {
 	return "", false
 }
 
+//获取数组
 // QueryArray returns a slice of strings for a given query key.
 // The length of the slice depends on the number of params with the given key.
 func (c *Context) QueryArray(key string) []string {
@@ -351,6 +393,7 @@ func (c *Context) QueryArray(key string) []string {
 	return values
 }
 
+//从query获取数据，是个[]string
 // GetQueryArray returns a slice of strings for a given query key, plus
 // a boolean value whether at least one value exists for the given key.
 func (c *Context) GetQueryArray(key string) ([]string, bool) {
@@ -362,6 +405,7 @@ func (c *Context) GetQueryArray(key string) ([]string, bool) {
 
 // PostForm returns the specified key from a POST urlencoded form or multipart form
 // when it exists, otherwise it returns an empty string `("")`.
+//获取post的form值
 func (c *Context) PostForm(key string) string {
 	value, _ := c.GetPostForm(key)
 	return value
@@ -370,6 +414,7 @@ func (c *Context) PostForm(key string) string {
 // DefaultPostForm returns the specified key from a POST urlencoded form or multipart form
 // when it exists, otherwise it returns the specified defaultValue string.
 // See: PostForm() and GetPostForm() for further information.
+//获取默认的post form
 func (c *Context) DefaultPostForm(key, defaultValue string) string {
 	if value, ok := c.GetPostForm(key); ok {
 		return value
@@ -384,6 +429,7 @@ func (c *Context) DefaultPostForm(key, defaultValue string) string {
 //     email=mail@example.com  -->  ("mail@example.com", true) := GetPostForm("email") // set email to "mail@example.com"
 // 	   email=                  -->  ("", true) := GetPostForm("email") // set email to ""
 //                             -->  ("", false) := GetPostForm("email") // do nothing with email
+//获取一个值
 func (c *Context) GetPostForm(key string) (string, bool) {
 	if values, ok := c.GetPostFormArray(key); ok {
 		return values[0], ok
@@ -391,6 +437,7 @@ func (c *Context) GetPostForm(key string) (string, bool) {
 	return "", false
 }
 
+//获取数组值
 // PostFormArray returns a slice of strings for a given form key.
 // The length of the slice depends on the number of params with the given key.
 func (c *Context) PostFormArray(key string) []string {
@@ -400,6 +447,7 @@ func (c *Context) PostFormArray(key string) []string {
 
 // GetPostFormArray returns a slice of strings for a given form key, plus
 // a boolean value whether at least one value exists for the given key.
+//获取postr from
 func (c *Context) GetPostFormArray(key string) ([]string, bool) {
 	req := c.Request
 	req.ParseForm()
@@ -407,6 +455,7 @@ func (c *Context) GetPostFormArray(key string) ([]string, bool) {
 	if values := req.PostForm[key]; len(values) > 0 {
 		return values, true
 	}
+	//处理上传的参数
 	if req.MultipartForm != nil && req.MultipartForm.File != nil {
 		if values := req.MultipartForm.Value[key]; len(values) > 0 {
 			return values, true
@@ -415,18 +464,23 @@ func (c *Context) GetPostFormArray(key string) ([]string, bool) {
 	return []string{}, false
 }
 
+//获取上传的头部信息
 // FormFile returns the first file for the provided form key.
 func (c *Context) FormFile(name string) (*multipart.FileHeader, error) {
 	_, fh, err := c.Request.FormFile(name)
 	return fh, err
 }
 
+//处理上传
+//请求的整个主体都会被解析，得到的文件记录最多maxMemery字节保存在内存，
+//其余部分保存在硬盘的temp文件里。
 // MultipartForm is the parsed multipart form, including file uploads.
 func (c *Context) MultipartForm() (*multipart.Form, error) {
 	err := c.Request.ParseMultipartForm(c.engine.MaxMultipartMemory)
 	return c.Request.MultipartForm, err
 }
 
+//保存上传的文件
 // SaveUploadedFile uploads the form file to specific dst.
 func (c *Context) SaveUploadedFile(file *multipart.FileHeader, dst string) error {
 	src, err := file.Open()
@@ -511,6 +565,7 @@ func (c *Context) ShouldBindWith(obj interface{}, b binding.Binding) error {
 // ClientIP implements a best effort algorithm to return the real client IP, it parses
 // X-Real-IP and X-Forwarded-For in order to work properly with reverse-proxies such us: nginx or haproxy.
 // Use X-Forwarded-For before X-Real-Ip as nginx uses X-Real-Ip with the proxy's IP.
+//获取客户端的ip
 func (c *Context) ClientIP() string {
 	if c.engine.ForwardedByClientIP {
 		clientIP := c.requestHeader("X-Forwarded-For")
@@ -540,6 +595,7 @@ func (c *Context) ClientIP() string {
 	return ""
 }
 
+//返回Content-Type
 // ContentType returns the Content-Type header of the request.
 func (c *Context) ContentType() string {
 	return filterFlags(c.requestHeader("Content-Type"))
@@ -547,6 +603,7 @@ func (c *Context) ContentType() string {
 
 // IsWebsocket returns true if the request headers indicate that a websocket
 // handshake is being initiated by the client.
+//判断是否是websocket
 func (c *Context) IsWebsocket() bool {
 	if strings.Contains(strings.ToLower(c.requestHeader("Connection")), "upgrade") &&
 		strings.ToLower(c.requestHeader("Upgrade")) == "websocket" {
@@ -555,6 +612,7 @@ func (c *Context) IsWebsocket() bool {
 	return false
 }
 
+//从header获取数据
 func (c *Context) requestHeader(key string) string {
 	return c.Request.Header.Get(key)
 }
@@ -562,7 +620,7 @@ func (c *Context) requestHeader(key string) string {
 /************************************/
 /******** RESPONSE RENDERING ********/
 /************************************/
-
+//状态码
 // bodyAllowedForStatus is a copy of http.bodyAllowedForStatus non-exported function.
 func bodyAllowedForStatus(status int) bool {
 	switch {
@@ -576,6 +634,7 @@ func bodyAllowedForStatus(status int) bool {
 	return true
 }
 
+//往头部写入status code
 // Status sets the HTTP response code.
 func (c *Context) Status(code int) {
 	c.writermem.WriteHeader(code)
@@ -584,6 +643,7 @@ func (c *Context) Status(code int) {
 // Header is a intelligent shortcut for c.Writer.Header().Set(key, value).
 // It writes a header in the response.
 // If value == "", this method removes the header `c.Writer.Header().Del(key)`
+//设置header值
 func (c *Context) Header(key, value string) {
 	if value == "" {
 		c.Writer.Header().Del(key)
@@ -592,11 +652,13 @@ func (c *Context) Header(key, value string) {
 	}
 }
 
+//从头部获取数据
 // GetHeader returns value from request headers.
 func (c *Context) GetHeader(key string) string {
 	return c.requestHeader(key)
 }
 
+//获取所有原生数据
 // GetRawData return stream data.
 func (c *Context) GetRawData() ([]byte, error) {
 	return ioutil.ReadAll(c.Request.Body)
@@ -605,6 +667,7 @@ func (c *Context) GetRawData() ([]byte, error) {
 // SetCookie adds a Set-Cookie header to the ResponseWriter's headers.
 // The provided cookie must have a valid Name. Invalid cookies may be
 // silently dropped.
+//设置cookie数据
 func (c *Context) SetCookie(name, value string, maxAge int, path, domain string, secure, httpOnly bool) {
 	if path == "" {
 		path = "/"
@@ -624,6 +687,7 @@ func (c *Context) SetCookie(name, value string, maxAge int, path, domain string,
 // ErrNoCookie if not found. And return the named cookie is unescaped.
 // If multiple cookies match the given name, only one cookie will
 // be returned.
+//获取cookie
 func (c *Context) Cookie(name string) (string, error) {
 	cookie, err := c.Request.Cookie(name)
 	if err != nil {
@@ -633,6 +697,7 @@ func (c *Context) Cookie(name string) (string, error) {
 	return val, nil
 }
 
+//设置状态，处理模板
 func (c *Context) Render(code int, r render.Render) {
 	c.Status(code)
 
@@ -647,6 +712,7 @@ func (c *Context) Render(code int, r render.Render) {
 	}
 }
 
+//处理html
 // HTML renders the HTTP template specified by its file name.
 // It also updates the HTTP code and sets the Content-Type as "text/html".
 // See http://golang.org/doc/articles/wiki/
@@ -655,6 +721,7 @@ func (c *Context) HTML(code int, name string, obj interface{}) {
 	c.Render(code, instance)
 }
 
+//待处理json
 // IndentedJSON serializes the given struct as pretty JSON (indented + endlines) into the response body.
 // It also sets the Content-Type as "application/json".
 // WARNING: we recommend to use this only for development purposes since printing pretty JSON is
@@ -663,6 +730,7 @@ func (c *Context) IndentedJSON(code int, obj interface{}) {
 	c.Render(code, render.IndentedJSON{Data: obj})
 }
 
+//安全处理json
 // SecureJSON serializes the given struct as Secure JSON into the response body.
 // Default prepends "while(1)," to response body if the given struct is array values.
 // It also sets the Content-Type as "application/json".
@@ -670,28 +738,33 @@ func (c *Context) SecureJSON(code int, obj interface{}) {
 	c.Render(code, render.SecureJSON{Prefix: c.engine.secureJsonPrefix, Data: obj})
 }
 
+//json返回数据
 // JSON serializes the given struct as JSON into the response body.
 // It also sets the Content-Type as "application/json".
 func (c *Context) JSON(code int, obj interface{}) {
 	c.Render(code, render.JSON{Data: obj})
 }
 
+//xml返回数据
 // XML serializes the given struct as XML into the response body.
 // It also sets the Content-Type as "application/xml".
 func (c *Context) XML(code int, obj interface{}) {
 	c.Render(code, render.XML{Data: obj})
 }
 
+//yaml返回数据
 // YAML serializes the given struct as YAML into the response body.
 func (c *Context) YAML(code int, obj interface{}) {
 	c.Render(code, render.YAML{Data: obj})
 }
 
+//返回一个string
 // String writes the given string into the response body.
 func (c *Context) String(code int, format string, values ...interface{}) {
 	c.Render(code, render.String{Format: format, Data: values})
 }
 
+//跳转
 // Redirect returns a HTTP redirect to the specific location.
 func (c *Context) Redirect(code int, location string) {
 	c.Render(-1, render.Redirect{
@@ -701,6 +774,7 @@ func (c *Context) Redirect(code int, location string) {
 	})
 }
 
+//返回数据
 // Data writes some data into the body stream and updates the HTTP code.
 func (c *Context) Data(code int, contentType string, data []byte) {
 	c.Render(code, render.Data{
@@ -709,11 +783,13 @@ func (c *Context) Data(code int, contentType string, data []byte) {
 	})
 }
 
+//处理文件请求name指定的文件或者目录的内容
 // File writes the specified file into the body stream in a efficient way.
 func (c *Context) File(filepath string) {
 	http.ServeFile(c.Writer, c.Request, filepath)
 }
 
+//设置event
 // SSEvent writes a Server-Sent Event into the body stream.
 func (c *Context) SSEvent(name string, message interface{}) {
 	c.Render(-1, sse.Event{
@@ -722,17 +798,19 @@ func (c *Context) SSEvent(name string, message interface{}) {
 	})
 }
 
+//处理流
 func (c *Context) Stream(step func(w io.Writer) bool) {
 	w := c.Writer
+	//关闭和通知
 	clientGone := w.CloseNotify()
 	for {
 		select {
-		case <-clientGone:
+		case <-clientGone: //客户端处理完成
 			return
 		default:
-			keepOpen := step(w)
-			w.Flush()
-			if !keepOpen {
+			keepOpen := step(w) //处理流
+			w.Flush()           //刷新
+			if !keepOpen {      //错误，直接返回
 				return
 			}
 		}
@@ -743,6 +821,7 @@ func (c *Context) Stream(step func(w io.Writer) bool) {
 /******** CONTENT NEGOTIATION *******/
 /************************************/
 
+//各种类型的数据
 type Negotiate struct {
 	Offered  []string
 	HTMLName string
@@ -752,6 +831,7 @@ type Negotiate struct {
 	Data     interface{}
 }
 
+//检测允许返回的类型
 func (c *Context) Negotiate(code int, config Negotiate) {
 	switch c.NegotiateFormat(config.Offered...) {
 	case binding.MIMEJSON:
@@ -771,6 +851,8 @@ func (c *Context) Negotiate(code int, config Negotiate) {
 	}
 }
 
+//处理格式化
+//设置运行接收的的类型
 func (c *Context) NegotiateFormat(offered ...string) string {
 	assert1(len(offered) > 0, "you must provide at least one offer")
 
@@ -790,6 +872,7 @@ func (c *Context) NegotiateFormat(offered ...string) string {
 	return ""
 }
 
+//设置格式化字符串
 func (c *Context) SetAccepted(formats ...string) {
 	c.Accepted = formats
 }
@@ -798,18 +881,22 @@ func (c *Context) SetAccepted(formats ...string) {
 /***** GOLANG.ORG/X/NET/CONTEXT *****/
 /************************************/
 
+//设置deadline
 func (c *Context) Deadline() (deadline time.Time, ok bool) {
 	return
 }
 
+//完成
 func (c *Context) Done() <-chan struct{} {
 	return nil
 }
 
+//返回error
 func (c *Context) Err() error {
 	return nil
 }
 
+//获取val
 func (c *Context) Value(key interface{}) interface{} {
 	if key == 0 {
 		return c.Request

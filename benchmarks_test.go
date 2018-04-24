@@ -36,6 +36,7 @@ func BenchmarkLoggerMiddleware(B *testing.B) {
 	runRequest(B, router, "GET", "/")
 }
 
+//测试多个中间件
 func BenchmarkManyHandlers(B *testing.B) {
 	router := New()
 	router.Use(Recovery(), LoggerWithWriter(newMockWriter()))
