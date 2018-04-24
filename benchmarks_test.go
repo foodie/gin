@@ -18,6 +18,7 @@ func BenchmarkOneRoute(B *testing.B) {
 	runRequest(B, router, "GET", "/ping")
 }
 
+//测试revover的效率
 //test recovery middleware
 func BenchmarkRecoveryMiddleware(B *testing.B) {
 	router := New()
@@ -26,6 +27,7 @@ func BenchmarkRecoveryMiddleware(B *testing.B) {
 	runRequest(B, router, "GET", "/")
 }
 
+//测试logger的效率
 //test logg middleware
 func BenchmarkLoggerMiddleware(B *testing.B) {
 	router := New()
