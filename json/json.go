@@ -10,7 +10,11 @@ import "encoding/json"
 
 //定义内部变量
 var (
-	Marshal       = json.Marshal
+	//Marshal函数返回v的json编码
+	Marshal = json.Marshal
+	//类似Marshal但会使用缩进将输出格式化
 	MarshalIndent = json.MarshalIndent
-	NewDecoder    = json.NewDecoder
+	//创建一个从r读取并解码json对象的*Decoder，
+	//解码器有自己的缓冲，并可能超前读取部分json数据。
+	NewDecoder = json.NewDecoder
 )

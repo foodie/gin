@@ -11,17 +11,26 @@ import (
 	"time"
 )
 
+//检测form表单
 func mapForm(ptr interface{}, form map[string][]string) error {
+	//类型
 	typ := reflect.TypeOf(ptr).Elem()
+	//值
 	val := reflect.ValueOf(ptr).Elem()
+	//获取field的个数
 	for i := 0; i < typ.NumField(); i++ {
+		//类型
 		typeField := typ.Field(i)
+		//值
 		structField := val.Field(i)
+		//如果v持有的值可以被修改，CanSet就会返回真。
 		if !structField.CanSet() {
 			continue
 		}
-
+		//类型
 		structFieldKind := structField.Kind()
+
+		//输入的字段的名字
 		inputFieldName := typeField.Tag.Get("form")
 		if inputFieldName == "" {
 			inputFieldName = typeField.Name
@@ -29,6 +38,7 @@ func mapForm(ptr interface{}, form map[string][]string) error {
 			// if "form" tag is nil, we inspect if the field is a struct.
 			// this would not make sense for JSON parsing but it does for a form
 			// since data is flatten
+			//转换
 			if structFieldKind == reflect.Struct {
 				err := mapForm(structField.Addr().Interface(), form)
 				if err != nil {
@@ -37,14 +47,17 @@ func mapForm(ptr interface{}, form map[string][]string) error {
 				continue
 			}
 		}
+		//不存在跳过
 		inputValue, exists := form[inputFieldName]
 		if !exists {
 			continue
 		}
-
+		//长度
 		numElems := len(inputValue)
+		//是slice
 		if structFieldKind == reflect.Slice && numElems > 0 {
 			sliceOf := structField.Type().Elem().Kind()
+			//创建类型
 			slice := reflect.MakeSlice(structField.Type(), numElems, numElems)
 			for i := 0; i < numElems; i++ {
 				if err := setWithProperType(sliceOf, inputValue[i], slice.Index(i)); err != nil {
@@ -53,12 +66,14 @@ func mapForm(ptr interface{}, form map[string][]string) error {
 			}
 			val.Field(i).Set(slice)
 		} else {
+			//是时间
 			if _, isTime := structField.Interface().(time.Time); isTime {
 				if err := setTimeField(inputValue[0], typeField, structField); err != nil {
 					return err
 				}
 				continue
 			}
+			//设置合适类型
 			if err := setWithProperType(typeField.Type.Kind(), inputValue[0], structField); err != nil {
 				return err
 			}
@@ -67,6 +82,7 @@ func mapForm(ptr interface{}, form map[string][]string) error {
 	return nil
 }
 
+//设置合适的值
 func setWithProperType(valueKind reflect.Kind, val string, structField reflect.Value) error {
 	switch valueKind {
 	case reflect.Int:

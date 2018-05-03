@@ -9,6 +9,7 @@ import (
 	"net/http"
 )
 
+//xml绑定
 type xmlBinding struct{}
 
 func (xmlBinding) Name() string {

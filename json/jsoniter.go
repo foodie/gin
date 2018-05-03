@@ -10,6 +10,7 @@ import "github.com/json-iterator/go"
 
 //对json进行包装
 var (
+	//内部使用
 	json          = jsoniter.ConfigCompatibleWithStandardLibrary
 	Marshal       = json.Marshal
 	MarshalIndent = json.MarshalIndent

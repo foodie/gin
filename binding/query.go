@@ -6,6 +6,7 @@ package binding
 
 import "net/http"
 
+//查询绑定
 type queryBinding struct{}
 
 func (queryBinding) Name() string {

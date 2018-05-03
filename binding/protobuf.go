@@ -13,6 +13,7 @@ import (
 
 type protobufBinding struct{}
 
+//定义基本的类型
 func (protobufBinding) Name() string {
 	return "protobuf"
 }
