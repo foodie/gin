@@ -14,6 +14,7 @@ type MsgPack struct {
 	Data interface{}
 }
 
+//msgpack的跳转
 var msgpackContentType = []string{"application/msgpack; charset=utf-8"}
 
 func (r MsgPack) WriteContentType(w http.ResponseWriter) {
@@ -24,6 +25,7 @@ func (r MsgPack) Render(w http.ResponseWriter) error {
 	return WriteMsgPack(w, r.Data)
 }
 
+//基本的处理
 func WriteMsgPack(w http.ResponseWriter, obj interface{}) error {
 	writeContentType(w, msgpackContentType)
 	var h codec.Handle = new(codec.MsgpackHandle)

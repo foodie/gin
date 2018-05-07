@@ -9,6 +9,7 @@ import (
 	"net/http"
 )
 
+//xml处理
 type XML struct {
 	Data interface{}
 }

@@ -11,8 +11,9 @@ import (
 	"strings"
 )
 
+//定义router接口
 type IRouter interface {
-	IRoutes
+	IRoutes //直接包含了IRoutes接口
 	Group(string, ...HandlerFunc) *RouterGroup
 }
 

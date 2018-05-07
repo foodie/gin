@@ -11,10 +11,12 @@ import (
 	"github.com/gin-gonic/gin/json"
 )
 
+//json数据
 type JSON struct {
 	Data interface{}
 }
 
+//MarshalIndent类似Marshal但会使用缩进将输出格式化。
 type IndentedJSON struct {
 	Data interface{}
 }
@@ -26,8 +28,10 @@ type SecureJSON struct {
 
 type SecureJSONPrefix string
 
+//头部数据
 var jsonContentType = []string{"application/json; charset=utf-8"}
 
+//json的处理
 func (r JSON) Render(w http.ResponseWriter) (err error) {
 	if err = WriteJSON(w, r.Data); err != nil {
 		panic(err)
@@ -49,6 +53,7 @@ func WriteJSON(w http.ResponseWriter, obj interface{}) error {
 	return nil
 }
 
+//IndentedJSON的处理
 func (r IndentedJSON) Render(w http.ResponseWriter) error {
 	r.WriteContentType(w)
 	jsonBytes, err := json.MarshalIndent(r.Data, "", "    ")
@@ -69,6 +74,7 @@ func (r SecureJSON) Render(w http.ResponseWriter) error {
 	if err != nil {
 		return err
 	}
+	//?
 	// if the jsonBytes is array values
 	if bytes.HasPrefix(jsonBytes, []byte("[")) && bytes.HasSuffix(jsonBytes, []byte("]")) {
 		w.Write([]byte(r.Prefix))
@@ -77,6 +83,7 @@ func (r SecureJSON) Render(w http.ResponseWriter) error {
 	return nil
 }
 
+//写入头部
 func (r SecureJSON) WriteContentType(w http.ResponseWriter) {
 	writeContentType(w, jsonContentType)
 }

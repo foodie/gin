@@ -10,6 +10,8 @@ import (
 	"net/http"
 )
 
+//格式化输出文本
+
 type String struct {
 	Format string
 	Data   []interface{}

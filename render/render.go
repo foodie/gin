@@ -28,6 +28,7 @@ var (
 	_ Render     = MsgPack{}
 )
 
+//设置header
 //如果Content-Type 不存在，写Content-Type
 func writeContentType(w http.ResponseWriter, value []string) {
 	header := w.Header()

@@ -10,16 +10,19 @@ import (
 	"log"
 )
 
+//初始化日志模式
 func init() {
 	log.SetFlags(0)
 }
 
+//判断是否是debug
 // IsDebugging returns true if the framework is running in debug mode.
 // Use SetMode(gin.ReleaseMode) to disable debug mode.
 func IsDebugging() bool {
 	return ginMode == debugCode
 }
 
+//打印router
 func debugPrintRoute(httpMethod, absolutePath string, handlers HandlersChain) {
 	if IsDebugging() {
 		nuHandlers := len(handlers)
@@ -28,6 +31,7 @@ func debugPrintRoute(httpMethod, absolutePath string, handlers HandlersChain) {
 	}
 }
 
+//显示加载的模板列表
 func debugPrintLoadTemplate(tmpl *template.Template) {
 	if IsDebugging() {
 		var buf bytes.Buffer
@@ -40,18 +44,21 @@ func debugPrintLoadTemplate(tmpl *template.Template) {
 	}
 }
 
+//显示debug内容
 func debugPrint(format string, values ...interface{}) {
 	if IsDebugging() {
 		log.Printf("[GIN-debug] "+format, values...)
 	}
 }
 
+//waring
 func debugPrintWARNINGDefault() {
 	debugPrint(`[WARNING] Creating an Engine instance with the Logger and Recovery middleware already attached.
 
 `)
 }
 
+//waring new
 func debugPrintWARNINGNew() {
 	debugPrint(`[WARNING] Running in "debug" mode. Switch to "release" mode in production.
  - using env:	export GIN_MODE=release

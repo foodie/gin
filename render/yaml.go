@@ -10,6 +10,7 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+//yaml的处理
 type YAML struct {
 	Data interface{}
 }

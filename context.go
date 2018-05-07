@@ -40,9 +40,9 @@ const abortIndex int8 = math.MaxInt8 / 2
 // Context is the most important part of gin. It allows us to pass variables between middleware,
 // manage the flow, validate the JSON of a request and render a JSON response for example.
 type Context struct {
-	writermem responseWriter //内部的写
+	writermem responseWriter //内部的实现
 	Request   *http.Request  //请求request
-	Writer    ResponseWriter //实现写的新接口
+	Writer    ResponseWriter //内部的新接口
 
 	Params   Params        //参数
 	handlers HandlersChain //调用函数链
